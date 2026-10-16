@@ -1,0 +1,29 @@
+import express from 'express';
+import cors from 'cors';
+import ConnectDB from "./db/db.js";
+import userRoutes from "./Router/UserRouter.js";
+import decisionRoutes from "./Router/decisionRoutes.js";
+import groupRoutes from "./Router/groupRouter.js";
+import loginRoutes from "./Router/loginRouter.js";
+import cookieParser from "cookie-parser";
+
+const app = express();
+
+app.use(cors({
+    origin: 'http://localhost:5173',
+}));
+
+app.use(express.json());
+app.use(cookieParser());
+
+
+ConnectDB();
+
+app.use("/users",userRoutes);
+app.use("/decisions",decisionRoutes);
+app.use("/groups",groupRoutes);
+app.use("/",loginRoutes);
+
+app.listen(7000, () => {
+    console.log("server started at http://localhost:7000 ");
+})
