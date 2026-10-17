@@ -1,38 +1,44 @@
-import {model , Schema} from "mongoose";
+import { model, Schema } from "mongoose";
 
-const decision = new Schema({
+const decisionSchema = new Schema(
+    {
+        User: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
 
-    User: {
-        type: Schema.Types.ObjectId
+        title: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        description: {
+            type: String,
+            required: true,
+        },
+
+        decision: {
+            type: String,
+            required: true,
+        },
+
+        reason: {
+            type: String,
+            required: true,
+        },
+
+        status: {
+            type: String,
+            default: "Pending",
+        },
     },
-
-    title: {
-        type: String,
-        required: true
-    },
-
-    description: {
-        type: String,
-        required: true
-    },
-
-    decision: {
-        type: String,
-        required: true
-    },
-
-    reason: {
-        type: String,
-        required: true
-    },
-    status: {
-        type: String,
+    {
+        timestamps: true,
+        strict: "throw",
     }
-},
-{
-    timestamps : true,
-    strict : "throw"
-})
+);
 
-const Decisions = model("decision",decision);
+const Decisions = model("decision", decisionSchema);
 export default Decisions;

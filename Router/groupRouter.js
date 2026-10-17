@@ -16,6 +16,6 @@ router.post("/addMember",authMiddleware, addMember)
 router.post("/removeMember",authMiddleware, removeMember)
 router.post("/addAdmin",authMiddleware, addAdmin)
 router.post("/leaveGroup",authMiddleware, leaveGroup)
-router.get("/getMembers",authMiddleware, getMembers)
+router.post("/getMembers",authMiddleware, getMembers)
 
 export default router;

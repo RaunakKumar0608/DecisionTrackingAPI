@@ -8,19 +8,23 @@ export async function createDecision(req, res) {
         return res.status(400).json({message:"All fields are required"});
     }
 
+    console.log(decision);
+
     const dec = await Decisions.create({
         title,
         description,
         reason,
-        decision
+        decision,
+        User : req.user
     })
 
-    const updateUser = await User.updateOne({_id : req.user_id},
-        {
+    console.log("Here is the decision");
+
+    await User.findByIdAndUpdate({_id : req.user}, {
             $push : {
                 decisions : dec._id
             }
-        })
+        });
 
     return res.json(dec , { message: "Decision created successfully." });
 

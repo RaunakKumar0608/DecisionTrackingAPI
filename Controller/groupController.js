@@ -162,8 +162,8 @@ export async function leaveGroup(req, res) {
             return res.status(400).json({message: "Id of the group is required"});
         }
 
-          const userId = req.user.toString();
-        await Group.findByIdAndUpdate( groupId, {
+        const userId = req.user.toString();
+        await Group.findByIdAndUpdate(req.user , {
             $pull:{
                 administrator: userId,
                 groupMembers: userId
@@ -184,26 +184,35 @@ export async function leaveGroup(req, res) {
 }
 
 export async function getMembers(req,res){
-    try{
+
+    try {
         const {groupId} = req.body;
+
+        const user = req.user;
+
         if (!groupId) {
-        return res.status(400).json({message: "Id of the group is required"});}
-        const userId = req.user.toString();
-
-        const isGroup = await Group.findById(groupId).select("groupMembers");
-        if (!isGroup) {
-            return res.status(400).json({message: "Group not found"});
+            return res.status(401).json({message: "All fields are required"});
         }
 
+        const group = await Group.findById(groupId);
 
-        const isMember = isGroup.groupMembers.find(id => id === userId)
-        if (!isMember) {
-            return res.status(400).json({message: "You are not authorized to See members Of the group"});
+        if (!group) {
+            return res.status(401).json({message: "Group not found"});
         }
 
-        return res.status(200).json({isGroup})
+        const groupMembers = group.groupMembers;
+        console.log("here");
+        const isMember = groupMembers.find(id => id.equals(user));
+        console.log(isMember);
+        if(!isMember){
+            return res.status(401).json({message: "You are not authorized"});
+        }
+        const users = await User.find({_id: {$in: groupMembers}}).select("name email");
+        console.log(users);
+        return res.status(200).json(users);
 
-    }catch(err) {
-        return res.status(400).json({message: err.message});
+    }catch (err){
+        console.log(err);
+        return res.status(401).json(err);
     }
 }

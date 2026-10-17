@@ -4,9 +4,6 @@ import {authMiddleware} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-
-
-
 router.post("/users",authMiddleware,Users);
 router.post("/myGroups",authMiddleware,getMyGroups)
 router.post("/membersDecisions",authMiddleware,membersDecisions)

@@ -114,17 +114,14 @@ export async function login(req,res){
         try {
             const user = req.user
 
-            console.log(user)
             const groupObj =await User.findById(user).select("groups")
             const  groupsArray = groupObj.groups;
-            console.log(groupsArray)
 
             if (!groupsArray) {
                 return res.status(401).json({message: "User Not found"});
             }
 
             const groups = await Group.find({_id : {$in : groupsArray}}).lean()
-            console.log(groups)
             return res.status(200).json(groups);
 
         }catch (err){
