@@ -75,14 +75,6 @@ export async function login(req,res){
                 return res.status(401).json({message: "You are not authorized"});
             }
             const users = await User.find({_id: {$in: groupMembers}}).select("name email");
-
-
-            const decisions = await Decisions.find({
-                _id: { $in: group.decisions },
-                User: member._id
-            });
-
-
             return res.status(200).json(users);
 
         }catch (err){
