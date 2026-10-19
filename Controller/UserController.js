@@ -1,5 +1,6 @@
 import User from "../Models/User.js";
 import Group from "../Models/GroupModel.js";
+import Decision from "../Models/Decision.js";
 
     export async function createUser(req, res) {
     const {name, email, password} = req.body;
@@ -74,6 +75,14 @@ export async function login(req,res){
                 return res.status(401).json({message: "You are not authorized"});
             }
             const users = await User.find({_id: {$in: groupMembers}}).select("name email");
+
+
+            const decisions = await Decisions.find({
+                _id: { $in: group.decisions },
+                User: member._id
+            });
+
+
             return res.status(200).json(users);
 
         }catch (err){
@@ -84,29 +93,40 @@ export async function login(req,res){
     }
 
     export async function membersDecisions(req,res){
-        const {groupId,memberId} = req.body;
+        const {groupId, email} = req.body;
+
         const user = req.user;
 
-        if(!groupId || !memberId) {
+        if(!groupId || !email) {
             return res.status(401).json({message: "All fields are required"});
         }
 
-        const validGroup = await Group.findById(groupId).select("groupMembers");
-        if(!validGroup){
-            return res.status(401).json({message: "You are not authorized"});
-        }
-        const isMember =  validGroup.groupMembers.find(id => id === user.toString());
-        const isGroupMember = validGroup.groupMembers.find(id => id === memberId);
+        const validGroup = await Group.findById(groupId).select("groupMembers decisions");
 
-        if(!isMember){
+        if(!validGroup){
+            return res.status(401).json({message: "Group Not Found"});
+        }
+
+        const requesterIsAMember =  validGroup.groupMembers.find(id => id === user.toString());
+        const findUser = await User.find({email : email}).select("_id");
+        if(!findUser){return res.status(401).json({message:"User not found"});}
+
+        const isGroupMember = validGroup.groupMembers.find(id => id === findUser._id.toString());
+
+        if(!requesterIsAMember){
             return res.status(401).json({message: "You are not authorized"});
         }
+
         if(!isGroupMember ){
             return res.status(401).json({message: "User does not exist"});
         }
 
-        const memberDetails =await User.findById(memberId).select("name email decisions");
-        return res.status(200).json(memberDetails);
+        const decisions = await Decisions.find({
+            _id: { $in: group.decisions },
+            User: findUser._id
+        });
+
+        return res.status(200).json(decisions);
 
     }
 

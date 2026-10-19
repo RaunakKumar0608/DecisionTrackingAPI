@@ -17,6 +17,10 @@ const groupSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "User",
         }],
+        decisions : [{
+        type: Schema.Types.ObjectId,
+        ref: "Decision",
+        }]
     },
     { timestamps: true }
 );
