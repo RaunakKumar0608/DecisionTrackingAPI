@@ -34,7 +34,6 @@ export async function addMember(req, res) {
         const userExists = await User.find({email : newMember});
 
         if (userExists.length == 0) {
-            console.log(userExists);
             return res.status(400).json({message: "User Doesn't exist, User Can't be added to group"});
         }
 
@@ -43,8 +42,6 @@ export async function addMember(req, res) {
         if (!groupExist) {
             return res.status(400).json({message: "Group Does Not Exist, User Can't be added to group"});
         }
-        console.log(req.user);
-        console.log( typeof groupExist.administrator[0]);
         const isAdmin = groupExist.administrator.find(user => user === req.user.toString());
 
         if (!isAdmin) {
