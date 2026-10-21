@@ -4,7 +4,7 @@ import Group from "../Models/GroupModel.js";
 
 export async function createDecision(req, res) {
     try {
-        const {decision, title, reason, description, groupId} = req.body;
+        const {decision, title, reason, description, groupId} = req.body || {};
         if (!decision || !title || !description || !reason) {
             return res.status(400).json({message: "All fields are required"});
         }
@@ -17,7 +17,6 @@ export async function createDecision(req, res) {
             User: req.user
         })
 
-        console.log("Here is the decision");
 
         await User.findByIdAndUpdate({_id: req.user}, {
             $push: {
@@ -28,7 +27,7 @@ export async function createDecision(req, res) {
         if (groupId) {
             await Group.findByIdAndUpdate({_id: groupId}, {
                 $push: {
-                    decisions: dec._id
+                    decisions: dec._id.toString()
                 }
             });
         }

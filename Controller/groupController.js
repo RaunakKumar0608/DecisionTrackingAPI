@@ -28,11 +28,13 @@ export async function addMember(req, res) {
         const {group, newMember} = req.body;
 
         if (!group || !newMember) {
-            return res.status(400).json({message: "Group Id and Member Id is required"});
+            return res.status(400).json({message: "Group Id and Member's email is required"});
         }
 
-        const userExists = await User.findById(newMember).select("_id");
-        if (!userExists) {
+        const userExists = await User.find({email : newMember});
+
+        if (userExists.length == 0) {
+            console.log(userExists);
             return res.status(400).json({message: "User Doesn't exist, User Can't be added to group"});
         }
 
@@ -41,8 +43,9 @@ export async function addMember(req, res) {
         if (!groupExist) {
             return res.status(400).json({message: "Group Does Not Exist, User Can't be added to group"});
         }
-
-        const isAdmin = groupExist.administrator.find(user => user.equals(req.user));
+        console.log(req.user);
+        console.log( typeof groupExist.administrator[0]);
+        const isAdmin = groupExist.administrator.find(user => user === req.user.toString());
 
         if (!isAdmin) {
             return res.status(401).json({message: "You are not authorized to add members"});
@@ -53,11 +56,14 @@ export async function addMember(req, res) {
             },
             {
                 $addToSet: {
-                    groupMembers: newMember
+                    groupMembers: newMember.toLowerCase()
                 }
             })
 
-        await User.findByIdAndUpdate(newMember, {
+        await User.updateOne({
+            email : newMember
+            },
+            {
             $addToSet: {
                 groups: group
             }
@@ -65,6 +71,7 @@ export async function addMember(req, res) {
 
         return res.status(201).json({message: "Member added successfully"});
     }catch(err) {
+        console.log(err.message);
         return res.status(400).json({message: err.message});
     }
 }
@@ -188,8 +195,6 @@ export async function getMembers(req,res){
     try {
         const {groupId} = req.body;
 
-        const user = req.user;
-
         if (!groupId) {
             return res.status(401).json({message: "All fields are required"});
         }
@@ -201,14 +206,14 @@ export async function getMembers(req,res){
         }
 
         const groupMembers = group.groupMembers;
-        console.log("here");
-        const isMember = groupMembers.find(id => id.equals(user));
-        console.log(isMember);
+
+        const isMember = groupMembers.find(user => user === req.email);
+
         if(!isMember){
             return res.status(401).json({message: "You are not authorized"});
         }
-        const users = await User.find({_id: {$in: groupMembers}}).select("name email");
-        console.log(users);
+
+        const users = await User.find({email: {$in: groupMembers}}).select("name email");
         return res.status(200).json(users);
 
     }catch (err){

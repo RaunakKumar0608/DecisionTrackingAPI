@@ -9,12 +9,12 @@ const groupSchema = new Schema(
         },
 
         administrator: [{
-            type: Schema.Types.ObjectId,
+            type: String,
             ref: "User",
         }],
 
         groupMembers: [{
-            type: Schema.Types.ObjectId,
+            type: String,
             ref: "User",
         }],
         decisions : [{
