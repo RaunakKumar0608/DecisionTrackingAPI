@@ -1,13 +1,15 @@
 import User from "../Models/User.js";
 import Group from "../Models/GroupModel.js";
-import Decision from "../Models/Decision.js";
+import Decisions from "../Models/Decision.js";
 
     export async function createUser(req, res) {
-    const {name, email, password} = req.body;
+    let {name, email, password} = req.body;
 
     if(!name || !email || !password){
         return res.status(400).json({message: "All fields are required"});
     }
+
+    email = email.toLowerCase();
 
     const existingUser = await User.findOne({email});
 
@@ -84,43 +86,70 @@ export async function login(req,res){
 
     }
 
-    export async function membersDecisions(req,res){
-        const {groupId, email} = req.body;
+export async function membersDecisions(req, res) {
+    try {
+        const { email , groupId  } = req.query;
 
-        const user = req.user;
-
-        if(!groupId || !email) {
-            return res.status(401).json({message: "All fields are required"});
+        if (!groupId || !email) {
+            return res.status(400).json({
+                message: "Group ID and email are required"
+            });
         }
 
-        const validGroup = await Group.findById(groupId).select("groupMembers decisions");
+        const validGroup = await Group.findById(groupId)
+            .select("groupMembers decisions");
 
-        if(!validGroup){
-            return res.status(401).json({message: "Group Not Found"});
+        if (!validGroup) {
+            return res.status(404).json({
+                message: "Group not found"
+            });
         }
 
-        const requesterIsAMember =  validGroup.groupMembers.find(id => id === user.toString());
-        const findUser = await User.find({email : email}).select("_id");
-        if(!findUser){return res.status(401).json({message:"User not found"});}
+        const requesterIsMember = validGroup.groupMembers.some(
+            id => id === req.email
+        );
 
-        const isGroupMember = validGroup.groupMembers.find(id => id === findUser._id.toString());
-
-        if(!requesterIsAMember){
-            return res.status(401).json({message: "You are not authorized"});
+        if (!requesterIsMember) {
+            return res.status(403).json({
+                message: "You are not authorized to view this group"
+            });
         }
 
-        if(!isGroupMember ){
-            return res.status(401).json({message: "User does not exist"});
+        const selectedUser = await User.findOne({
+            email: email.trim().toLowerCase()
+        }).select("_id email");
+
+        if (!selectedUser) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        const isGroupMember = validGroup.groupMembers.some(
+            id => id === selectedUser.email
+        );
+
+        if (!isGroupMember) {
+            return res.status(404).json({
+                message: "This user is not a member of the group"
+            });
         }
 
         const decisions = await Decisions.find({
-            _id: { $in: group.decisions },
-            User: findUser._id
+            _id: { $in: validGroup.decisions },
+            User: selectedUser._id
+        }).select("-createdAt -updatedAt -__v ");
+
+        return res.status(200).json({ decisions });
+
+    } catch (error) {
+        console.error("membersDecisions error:", error);
+
+        return res.status(500).json({
+            message: "Failed to fetch member decisions"
         });
-
-        return res.status(200).json(decisions);
-
     }
+}
 
     export async function getMyGroups(req,res){
         try {
@@ -133,7 +162,7 @@ export async function login(req,res){
                 return res.status(401).json({message: "User Not found"});
             }
 
-            const groups = await Group.find({_id : {$in : groupsArray}}).lean()
+            const groups = await Group.find({_id : {$in : groupsArray}}).select("groupName groupMembers").lean()
             return res.status(200).json(groups);
 
         }catch (err){

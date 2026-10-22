@@ -9,8 +9,8 @@ export async function createGroup(req, res) {
 
         const group = await Group.create({
             groupName: groupName,
-            administrator: [req.user.toString()],
-            groupMembers: [req.user.toString()]
+            administrator: [req.email],
+            groupMembers: [req.email]
         })
 
         await User.findByIdAndUpdate(req.user, {
@@ -24,6 +24,7 @@ export async function createGroup(req, res) {
 }
 
 export async function addMember(req, res) {
+
     try {
         const {group, newMember} = req.body;
 
@@ -31,9 +32,9 @@ export async function addMember(req, res) {
             return res.status(400).json({message: "Group Id and Member's email is required"});
         }
 
-        const userExists = await User.find({email : newMember});
+        const userExists = await User.findOne({email : newMember});
 
-        if (userExists.length == 0) {
+        if (!userExists) {
             return res.status(400).json({message: "User Doesn't exist, User Can't be added to group"});
         }
 
@@ -42,7 +43,7 @@ export async function addMember(req, res) {
         if (!groupExist) {
             return res.status(400).json({message: "Group Does Not Exist, User Can't be added to group"});
         }
-        const isAdmin = groupExist.administrator.find(user => user === req.user.toString());
+        const isAdmin = groupExist.administrator.find(user => user === req.email);
 
         if (!isAdmin) {
             return res.status(401).json({message: "You are not authorized to add members"});
@@ -121,18 +122,19 @@ export async function addAdmin(req, res) {
 
 export async function removeMember(req, res) {
     try {
-        const {group, memberId} = req.body;
+        const {group, email} = req.body;
 
-        if (!group || !memberId) {
+        if (!group || !email) {
             return res.status(400).json({message: "Id of both group and memberId is required"});
         }
 
         const isGroup = await Group.findById(group).select('administrator');
+
         if (!isGroup) {
             return res.status(400).json({message: "Group not found"});
         }
 
-        const isAdmin = isGroup.administrator.find(id => id.equals(req.user))
+        const isAdmin = isGroup.administrator.find(email => email === req.email)
 
         if (!isAdmin) {
             return res.status(400).json({message: "You are not authorized to remove from this group"});
@@ -140,12 +142,12 @@ export async function removeMember(req, res) {
 
         await Group.findByIdAndUpdate( group, {
             $pull: {
-                groupMembers: memberId,
-                administrator: memberId
+                groupMembers: email,
+                administrator: email
             }
         })
 
-        await User.findByIdAndUpdate( memberId, {
+        await User.findByIdAndUpdate( req.req, {
             $pull: {
                 groups: group
             }

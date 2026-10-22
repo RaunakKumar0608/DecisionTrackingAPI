@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.post("/users",authMiddleware,Users);
 router.post("/myGroups",authMiddleware,getMyGroups)
-router.post("/membersDecisions",authMiddleware,membersDecisions)
+router.get("/membersDecisions",authMiddleware,membersDecisions)
 
 export default router;
