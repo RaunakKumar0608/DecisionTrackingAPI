@@ -7,7 +7,8 @@ export async function authMiddleware(req, res, next) {
         return res.status(401).json({message: "Login required"});
     }
 
-    const user = await User.findById(req.cookies.cid).select("email");
+    const user =
+        await User.findById(req.cookies.cid).select("email");
     if(!user) return res.status(401).json({message: "User does not exist anymore"});
     req.user = user._id
     req.email = user.email

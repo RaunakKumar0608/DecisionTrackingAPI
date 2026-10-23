@@ -88,13 +88,16 @@ export async function login(req,res){
 
 export async function membersDecisions(req, res) {
     try {
-        const { email , groupId  } = req.query;
+        const { email, groupId } = req.query;
 
         if (!groupId || !email) {
             return res.status(400).json({
                 message: "Group ID and email are required"
             });
         }
+
+        const requesterEmail = req.email.trim().toLowerCase();
+        const targetEmail = email.trim().toLowerCase();
 
         const validGroup = await Group.findById(groupId)
             .select("groupMembers decisions");
@@ -105,8 +108,9 @@ export async function membersDecisions(req, res) {
             });
         }
 
+        // 1. Verify that the requester belongs to this group.
         const requesterIsMember = validGroup.groupMembers.some(
-            id => id === req.email
+            memberEmail => memberEmail.toLowerCase() === requesterEmail
         );
 
         if (!requesterIsMember) {
@@ -115,8 +119,9 @@ export async function membersDecisions(req, res) {
             });
         }
 
+        // 2. Find the selected user.
         const selectedUser = await User.findOne({
-            email: email.trim().toLowerCase()
+            email: targetEmail
         }).select("_id email");
 
         if (!selectedUser) {
@@ -125,8 +130,9 @@ export async function membersDecisions(req, res) {
             });
         }
 
+        // 3. Verify that the selected user belongs to this group.
         const isGroupMember = validGroup.groupMembers.some(
-            id => id === selectedUser.email
+            memberEmail => memberEmail.toLowerCase() === targetEmail
         );
 
         if (!isGroupMember) {
@@ -135,6 +141,7 @@ export async function membersDecisions(req, res) {
             });
         }
 
+        // 4. Return only this user's decisions belonging to this group.
         const decisions = await Decisions.find({
             _id: { $in: validGroup.decisions },
             User: selectedUser._id
@@ -144,6 +151,12 @@ export async function membersDecisions(req, res) {
 
     } catch (error) {
         console.error("membersDecisions error:", error);
+
+        if (error.name === "CastError") {
+            return res.status(400).json({
+                message: "Invalid group ID"
+            });
+        }
 
         return res.status(500).json({
             message: "Failed to fetch member decisions"
