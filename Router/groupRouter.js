@@ -6,7 +6,7 @@ import {
     getMembers,
     leaveGroup,
     removeMember,
-} from "../controller/groupController.js";
+} from "../Controller/groupController.js";
 import {authMiddleware} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
