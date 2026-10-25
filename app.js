@@ -30,6 +30,7 @@ app.use("/",loginRoutes);
 
 
 const PORT = process.env.PORT || 7000;
+app.set("trust proxy", 1);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
