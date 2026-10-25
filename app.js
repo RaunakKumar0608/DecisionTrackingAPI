@@ -10,7 +10,10 @@ import cookieParser from "cookie-parser";
 const app = express();
 
 app.use(cors({
-    origin: 'https://decision-frontend-silk.vercel.app/',
+    origin: [
+        'http://localhost:5173',
+        'https://decisionfloww.vercel.app'
+    ],
     credentials: true,
 }));
 
@@ -24,6 +27,7 @@ app.use("/users",userRoutes);
 app.use("/decisions",decisionRoutes);
 app.use("/groups",groupRoutes);
 app.use("/",loginRoutes);
+
 
 const PORT = process.env.PORT || 7000;
 
